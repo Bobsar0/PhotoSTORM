@@ -1,19 +1,21 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"html/template"
 	"net/http"
+
+	"github.com/bobsar0/PhotoSTORM/views"
+
+	"github.com/gorilla/mux"
 )
 
-var homeTemplate *template.Template    // stores our parsed home.gohtml template to use inside home function
-var contactTemplate *template.Template // stores our parsed contact.gohtml template to use inside contact function
-var faqTemplate *template.Template     // stores our parsed faq.gohtml template to use inside faq function
+var homeView *views.View    //stores view for home page consisting of home.gohtml template and layouts
+var contactView *views.View //stores view for contact page consisting of contact.gohtml template and layouts
+var faqView *views.View     //stores view for faq page consisting of faq.gohtml template and layouts
 
 //'home' handler function processes incoming web requests to access home page
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := homeTemplate.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := homeView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
@@ -21,7 +23,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 //'contact' handler function processes incoming web requests to access contact page
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactTemplate.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := contactView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
@@ -29,24 +31,14 @@ func contact(w http.ResponseWriter, r *http.Request) {
 //'faq' handler function processes incoming web requests to access faq page
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := faqTemplate.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := faqView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
 func main() {
-	var err error
-	homeTemplate, err = template.ParseFiles("views/home.gohtml") //Parse-Files will open up the template file and attempt to validate it.
-	if err != nil {
-		panic(err)
-	}
-	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
-	if err != nil {
-		panic(err)
-	}
-	faqTemplate, err = template.ParseFiles("views/faq.gohtml")
-	if err != nil {
-		panic(err)
-	}
+	homeView = views.NewView("views/home.gohtml")
+	contactView = views.NewView("views/contact.gohtml")
+	faqView = views.NewView("views/faq.gohtml")
 
 	r := mux.NewRouter()              //New gorilla/mux router
 	r.HandleFunc("/", home)           // tells the router to call the home function when the user wants to visit home page - indicated by path '/'
