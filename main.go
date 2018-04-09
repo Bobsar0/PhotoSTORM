@@ -15,7 +15,7 @@ var faqView *views.View     //stores view for faq page consisting of faq.gohtml 
 //'home' handler function processes incoming web requests to access home page
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := homeView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
@@ -23,7 +23,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 //'contact' handler function processes incoming web requests to access contact page
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
@@ -31,14 +31,14 @@ func contact(w http.ResponseWriter, r *http.Request) {
 //'faq' handler function processes incoming web requests to access faq page
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := faqView.Template.Execute(w, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
+	if err := faqView.Template.ExecuteTemplate(w, faqView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
 		panic(err)
 	}
 }
 func main() {
-	homeView = views.NewView("views/home.gohtml")
-	contactView = views.NewView("views/contact.gohtml")
-	faqView = views.NewView("views/faq.gohtml")
+	homeView = views.NewView("bootstrap", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "views/contact.gohtml")
+	faqView = views.NewView("bootstrap", "views/faq.gohtml")
 
 	r := mux.NewRouter()              //New gorilla/mux router
 	r.HandleFunc("/", home)           // tells the router to call the home function when the user wants to visit home page - indicated by path '/'
