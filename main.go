@@ -12,29 +12,31 @@ var homeView *views.View    //stores view for home page consisting of home.gohtm
 var contactView *views.View //stores view for contact page consisting of contact.gohtml template and layouts
 var faqView *views.View     //stores view for faq page consisting of faq.gohtml template and layouts
 
+// A helper function that panics on any error
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 //'home' handler function processes incoming web requests to access home page
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
-		panic(err)
-	}
+	must(homeView.Render(w, nil))
 }
 
 //'contact' handler function processes incoming web requests to access contact page
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
-		panic(err)
-	}
+	must(contactView.Render(w, nil))
 }
 
 //'faq' handler function processes incoming web requests to access faq page
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := faqView.Template.ExecuteTemplate(w, faqView.Layout, nil); err != nil { //write the results to w to ensure they are returned to the user who is making a web request.
-		panic(err)
-	}
+	must(faqView.Render(w, nil))
 }
+
 func main() {
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
