@@ -1,6 +1,7 @@
 package views
 
 import (
+	"log"
 	"html/template"
 	"path/filepath"
 	"net/http"
@@ -31,7 +32,7 @@ func NewView(layout string, files ...string) *View {
 	files = append(files, layoutFiles()...) //We pass in all of	the files returned by the layoutFiles function call (... unpacks the files and lists them as comma separated values)
 	t, err := template.ParseFiles(files...)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 	return &View{
 		Template: t,
