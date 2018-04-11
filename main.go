@@ -52,7 +52,7 @@ func main() {
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 	faqView = views.NewView("bootstrap", "views/faq.gohtml")
 	//signupView = views.NewView("bootstrap", "views/signup.gohtml")
-	usersC := controllers.NewUsers() //
+	usersC := controllers.NewUsers() 
 
 	r := mux.NewRouter()              //New gorilla/mux router
 	r.HandleFunc("/", home)           // tells the router to call the home function when the user wants to visit home page - indicated by path '/'
