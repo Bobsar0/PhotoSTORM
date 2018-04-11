@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/schema" //This package makes it easier to convert form values into a Go struct.
+
 	"github.com/bobsar0/PhotoSTORM/views"
 )
 
@@ -27,13 +29,22 @@ func (u *Users) NewUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Create is used to process the signup form when a user tries to create a new user account.
+//SignupForm contains fields required tobe filled by the user in the form
+type SignupForm struct {
+	Email    string `schema:"email"` //the struct tags are to let the schema package know about the input fields
+	Password string `schema:"password"`
+}
 
+//Create is used to process the signup form when a user tries to create a new user account.
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(w, r.PostForm["email"])    //prints value stored in our PostForm map with key "email"
-	fmt.Fprintln(w, r.PostForm["password"]) //prints value stored in our PostForm map with key "password"
+	dec := schema.NewDecoder()
+	form := SignupForm{}
+	if err := dec.Decode(&form, r.PostForm); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, form)
 }
