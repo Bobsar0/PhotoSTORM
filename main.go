@@ -55,11 +55,12 @@ func main() {
 	usersC := controllers.NewUsers() 
 
 	r := mux.NewRouter()              //New gorilla/mux router
-	r.HandleFunc("/", home)           // tells the router to call the home function when the user wants to visit home page - indicated by path '/'
-	r.HandleFunc("/contact", contact) // tells the router to call the home function when the user wants to visit contact page - indicated by path '/contact'
-	r.HandleFunc("/faq", faq)         // tells the router to call the home function when the user wants to visit faq page - indicated by path '/faq'
-	r.HandleFunc("/signup", usersC.NewUserForm)   // tells the router to call the home function when the user wants to visit signup page using the users controller
-
+	r.HandleFunc("/", home).Methods("GET")           // tells the router to call the home function when the user wants to visit home page - indicated by path '/'
+	r.HandleFunc("/contact", contact).Methods("GET") // tells the router to call the home function when the user wants to visit contact page - indicated by path '/contact'
+	r.HandleFunc("/faq", faq).Methods("GET")         // tells the router to call the home function when the user wants to visit faq page - indicated by path '/faq'
+	r.HandleFunc("/signup", usersC.NewUserForm).Methods("GET")   // tells the router to call the home function when the user wants to visit signup page using the users controller
+	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+	
 	http.ListenAndServe(":8080", r) // starts up a web server listening on port 8080 using our gorilla/mux router as the default handler for web requests.
 
 }

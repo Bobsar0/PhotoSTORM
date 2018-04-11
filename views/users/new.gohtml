@@ -18,7 +18,7 @@ http://getbootstrap.com/docs/3.3/components/#panels-heading-->
 
 {{define "signupForm"}}
 <!-- http://getbootstrap.com/docs/3.3/css/#forms-->
-<form>
+<form action="/signup" method="POST">
     <div class="form-group">
         <label for="email">Email address</label>
         <input type="email" name="email" class="form-control" 

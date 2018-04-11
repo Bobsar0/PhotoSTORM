@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bobsar0/PhotoSTORM/views"
@@ -22,6 +23,17 @@ func NewUsers() *Users {
 // GET /signup
 func (u *Users) NewUserForm(w http.ResponseWriter, r *http.Request) {
 	if err := u.NewView.Render(w, nil); err != nil {
-	panic(err)
+		panic(err)
 	}
+}
+
+//Create is used to process the signup form when a user tries to create a new user account.
+
+// POST /signup
+func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, r.PostForm["email"])    //prints value stored in our PostForm map with key "email"
+	fmt.Fprintln(w, r.PostForm["password"]) //prints value stored in our PostForm map with key "password"
 }
