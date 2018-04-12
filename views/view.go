@@ -1,10 +1,10 @@
 package views
 
 import (
-	"log"
 	"html/template"
-	"path/filepath"
+	"log"
 	"net/http"
+	"path/filepath"
 )
 
 //Adding glob helper variables
@@ -42,5 +42,13 @@ func NewView(layout string, files ...string) *View {
 
 //Render contains logic for rendering the view. Offloads the responsibility from our handlers.
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+	w.Header().Set("Content-Type", "text/html")
 	return v.Template.ExecuteTemplate(w, v.Layout, data)
+}
+
+//ServeHTTP() method is written so our View type can implement http.Handler interface for use in the r.Handle() method
+func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := v.Render(w, nil); err != nil {
+		panic(err)
+	}
 }
