@@ -10,6 +10,7 @@ import (
 //Adding glob helper variables
 var (
 	LayoutDir   = "views/layouts/" //specifies the layout directory
+	TemplateDir = "views/"
 	TemplateExt = ".gohtml"        //tells us what extension we expect all our template files to match
 )
 
@@ -29,6 +30,10 @@ type View struct {
 
 // NewView appends template files to the list of files provided, parses the template files, constructs the *View for us and returns it. Only called when program first starts running
 func NewView(layout string, files ...string) *View {
+	//Using the view file path helpers
+	addTemplatePath(files) //prepends "views/" to filename
+	addTemplateExt(files) //appends ".gohtml" to filename
+
 	files = append(files, layoutFiles()...) //We pass in all of	the files returned by the layoutFiles function call (... unpacks the files and lists them as comma separated values)
 	t, err := template.ParseFiles(files...)
 	if err != nil {
@@ -50,5 +55,22 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := v.Render(w, nil); err != nil {
 		panic(err)
+	}
+}
+
+// addTemplatePath takes in a slice of strings representing file paths for templates, 
+//and it prepends the TemplateDir directory to each string in the slice.
+// Eg the input {"home"} would result in the output: {"views/home"} if TemplateDir == "views/"
+func addTemplatePath(files []string) {
+	for i, j := range files {
+		files[i] = TemplateDir + j
+	}
+}
+// addTemplateExt takes in a slice of strings representing file paths for templates 
+//and it appends the TemplateExt extension to each string in the slice
+//Eg the input {"home"} would result in the output {"home.gohtml"} if TemplateExt == ".gohtml"
+func addTemplateExt(files []string) {
+	for i, j := range files {
+		files[i] = j + TemplateExt
 	}
 }

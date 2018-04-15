@@ -15,11 +15,14 @@ func main() {
 	
 	usersC := controllers.NewUsers()
 	staticC := controllers.NewStatic()
+	staticG := controllers.NewGalleries()
 
 	r := mux.NewRouter() //New gorilla/mux router
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
+	r.Handle("/gallery", staticG.Gallery).Methods("GET")
+
 	r.HandleFunc("/signup", usersC.NewUserForm).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 
