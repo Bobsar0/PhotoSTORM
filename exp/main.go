@@ -16,7 +16,7 @@ const (
 	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
-	password = "your password"
+	password = "your_password"
 	dbname   = "photostorm_dev"
 )
 
