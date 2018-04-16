@@ -1,19 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bobsar0/PhotoSTORM/controllers"
+	"github.com/bobsar0/PhotoSTORM/models"
 
 	"github.com/gorilla/mux"
 )
 
-//Handler functions deleted. Home, contact and faq pages now served via the ServeHTTP handler method on the views.View type inside of our static controller.
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "your_password"
+	dbname   = "photostorm_dev"
+)
 
 func main() {
-	//Views initializations also deleted as not needed
-	
-	usersC := controllers.NewUsers()
+	// Create a DB connection string.	
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	// Create our model services
+	us, err := models.NewUserService(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer us.Close() // Defer closing database until our main function exits,
+	us.AutoMigrate() //Ensures that our database is migrated properly.
+
+	// Initialize controllers
+	usersC := controllers.NewUsers(us)
 	staticC := controllers.NewStatic()
 	staticG := controllers.NewGalleries()
 
