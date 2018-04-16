@@ -30,9 +30,9 @@ func (u *Users) NewUserForm(w http.ResponseWriter, r *http.Request) {
 }
 
 //SignupForm contains fields required to be filled by the user in the form
-type SignupForm struct {
+type SignupForm struct { //the struct tags are to let the schema package know about the input fields
 	Name	 string `schema:"name"`
-	Email    string `schema:"email"` //the struct tags are to let the schema package know about the input fields
+	Email    string `schema:"email"` 
 	Password string `schema:"password"`
 }
 
@@ -45,6 +45,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	user := models.User{
 		Name: form.Name,
 		Email: form.Email,
+		Password: form.Password,
 	}
 	if err := u.us.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

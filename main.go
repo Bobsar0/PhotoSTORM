@@ -28,6 +28,7 @@ func main() {
 		panic(err)
 	}
 	defer us.Close() // Defer closing database until our main function exits,
+	//us.DestructiveReset()
 	us.AutoMigrate() //Ensures that our database is migrated properly.
 
 	// Initialize controllers

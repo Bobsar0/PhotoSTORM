@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -14,11 +15,15 @@ var (
 	ErrInvalidID = errors.New("models: ID provided was invalid")
 	)
 
+	var userPwPepper = "secret-random-string"
+
 //User type reps user resource
 type User struct {
 	gorm.Model //includes the id, created_at, updated_at, and created_at fields
 	Name string
 	Email string `gorm:"not null;unique_index"`
+	Password string `gorm:"-"` //stores the raw (unhashed) password. The "-" tag denotes that we will NEVER save this field in the database,
+	PasswordHash string `gorm:"not null"`
 }
 
 //UserService defines the abstraction layer for our users database - a way of hiding implementation details.
@@ -101,6 +106,14 @@ func (us *UserService) AutoMigrate() error {
 // Create will create the provided user and backfill data
 // like the ID, CreatedAt, and UpdatedAt fields.
 func (us *UserService) Create(user *User) error{
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(
+		pwBytes, bcrypt.DefaultCost) //DefaultCost dictates how much work (and sometimes memory) must be used to hash a password.
+	if err != nil{
+		return err
+	}
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
 	return us.db.Create(user).Error
 }
 // Update will update the provided user with all of the data in the provided user object.
