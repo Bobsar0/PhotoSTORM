@@ -45,6 +45,10 @@ func main() {
 	r.HandleFunc("/signup", usersC.NewUserForm).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 
+	// NOTE: We are using the Handle function, not HandleFunc
+	r.Handle("/login", usersC.LoginView).Methods("GET")
+	r.HandleFunc("/login", usersC.Login).Methods("POST")
+
 	http.ListenAndServe(":8080", r) // starts up a web server listening on port 8080 using our gorilla/mux router as the default handler for web requests.
 
 }

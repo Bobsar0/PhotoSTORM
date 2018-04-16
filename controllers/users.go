@@ -11,6 +11,7 @@ import (
 //Users controller
 type Users struct {
 	NewView *views.View //stores the new user view
+	LoginView *views.View //stores the login view
 	us *models.UserService //for easy access by handler methods
 }
 
@@ -18,6 +19,7 @@ type Users struct {
 func NewUsers(us *models.UserService) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", "users/new"),
+		LoginView: views.NewView("bootstrap", "users/login"),
 		us:	us,
 	}
 }
@@ -36,6 +38,11 @@ type SignupForm struct { //the struct tags are to let the schema package know ab
 	Password string `schema:"password"`
 }
 
+type LoginForm struct {
+	Email string `schema:"email"`
+	Password string `schema:"password"`
+} 
+
 //Create is used to process the signup form when a user tries to create a new user account. POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var form SignupForm
@@ -52,4 +59,15 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintln(w, "User is", user)
+}
+
+// Login is used to process the login form when a user tries to log in as an existing user (via email & pw).
+// POST /login
+func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+	form := LoginForm{}
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
+	}
+	// We will eventually do something to see if the
+	// information provided is correct.
 }
