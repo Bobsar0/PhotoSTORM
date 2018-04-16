@@ -42,27 +42,25 @@ func main() {
 	}
 
 	// Update a user
-user.Name = "Updated Name"
-if err := us.Update(&user); err != nil {
-panic(err)
-}
-// Delete a user
-
-
-// Update the call to ByID to instead be ByEmail
-foundUser, err := us.ByEmail("bob@g")
-if err != nil {
-panic(err)
+	user.Name = "Updated Name"
+	if err := us.Update(&user); err != nil {
+		panic(err)
 	}
-	fmt.Println("We found:::::::::::::::::", foundUser)
+
+	// Update the call to ByEmail
+	foundUser, err := us.ByEmail("bob@g")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(foundUser)
 
 	if err := us.Delete(foundUser.ID); err != nil {
 		panic(err)
-		}
+	}
 		// Verify the user is deleted
-		_, err = us.ByID(foundUser.ID)
-		if err != models.ErrNotFound {
+	_, err = us.ByID(foundUser.ID)
+	if err != models.ErrNotFound {
 		panic("user was not deleted!")
-		}
+	}
 }//end main
 
