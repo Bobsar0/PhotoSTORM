@@ -10,17 +10,17 @@ import (
 
 //Users controller
 type Users struct {
-	NewView *views.View //stores the new user view
-	LoginView *views.View //stores the login view
-	us *models.UserService //for easy access by handler methods
+	NewView   *views.View         //stores the new user view
+	LoginView *views.View         //stores the login view
+	us        *models.UserService //for easy access by handler methods
 }
 
 //NewUsers func sets up all the views our users controller will need.
 func NewUsers(us *models.UserService) *Users {
 	return &Users{
-		NewView: views.NewView("bootstrap", "users/new"),
+		NewView:   views.NewView("bootstrap", "users/new"),
 		LoginView: views.NewView("bootstrap", "users/login"),
-		us:	us,
+		us:        us,
 	}
 }
 
@@ -33,15 +33,15 @@ func (u *Users) NewUserForm(w http.ResponseWriter, r *http.Request) {
 
 //SignupForm contains fields required to be filled by the user in the form
 type SignupForm struct { //the struct tags are to let the schema package know about the input fields
-	Name	 string `schema:"name"`
-	Email    string `schema:"email"` 
+	Name     string `schema:"name"`
+	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
 
 type LoginForm struct {
-	Email string `schema:"email"`
+	Email    string `schema:"email"`
 	Password string `schema:"password"`
-} 
+}
 
 //Create is used to process the signup form when a user tries to create a new user account. POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +50,8 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	user := models.User{
-		Name: form.Name,
-		Email: form.Email,
+		Name:     form.Name,
+		Email:    form.Email,
 		Password: form.Password,
 	}
 	if err := u.us.Create(&user); err != nil {
@@ -68,6 +68,16 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
 	}
-	// We will eventually do something to see if the
-	// information provided is correct.
+	// Implementing Authentication
+	user, err := u.us.Authenticate(form.Email, form.Password)
+	switch err {
+	case models.ErrNotFound:
+		fmt.Fprintln(w, "Invalid email address!")
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(w, "Invalid password provided!")
+	case nil:
+		fmt.Fprintln(w, user)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
