@@ -1,14 +1,9 @@
-//Experimental file. Not to be used in production
-//Using GORM to interact with a database.
-
 package main
 
 import (
 	"fmt"
 
-	"github.com/bobsar0/PhotoSTORM/models"
-
-	_ "github.com/lib/pq" //implements the Postgres driver.
+	"github.com/bobsar0/photostorm/models"
 )
 
 const (
@@ -20,47 +15,37 @@ const (
 )
 
 func main() {
-	//Creating the connection string.
+	// Create a DB connection string.
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-
-	//Opening a database connection. Returns a *gorm.DB if successful
+	// Create our model services
 	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer us.Close()
+	defer us.Close() // Defer closing database until our main function exits,
 	us.DestructiveReset()
+	//us.AutoMigrate() //Ensures that our database is migrated properly.
 
-	//Create a user
 	user := models.User{
-		Name: "Steve Onyeneke",
-		Email: "bob@g",
+		Name:     "Steve Onyeneke",
+		Email:    "bob@gmail.com",
+		Password: "bob",
 	}
-	if err := us.Create(&user); err!=nil{
-		panic(err)
-	}
-
-	// Update a user
-	user.Name = "Updated Name"
-	if err := us.Update(&user); err != nil {
-		panic(err)
-	}
-
-	// Update the call to ByEmail
-	foundUser, err := us.ByEmail("bob@g")
+	err = us.Create(&user)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(foundUser)
 
-	if err := us.Delete(foundUser.ID); err != nil {
+	// Verify that the user has a Remember and RememberHash
+	fmt.Printf("%+v\n", user)
+	if user.Remember == "" {
+		panic("Invalid remember token")
+	}
+	// Verify that we can lookup a user with that remember token
+	user2, err := us.ByRemember(user.Remember)
+	if err != nil {
 		panic(err)
 	}
-		// Verify the user is deleted
-	_, err = us.ByID(foundUser.ID)
-	if err != models.ErrNotFound {
-		panic("user was not deleted!")
-	}
-}//end main
-
+	fmt.Printf("%+v\n", *user2)
+}
