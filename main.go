@@ -19,7 +19,7 @@ const (
 )
 
 func main() {
-	// Create a DB connection string.	
+	// Create a DB connection string.
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 	// Create our model services
@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 	defer us.Close() // Defer closing database until our main function exits,
-	//us.DestructiveReset()
+	us.DestructiveReset()
 	us.AutoMigrate() //Ensures that our database is migrated properly.
 
 	// Initialize controllers

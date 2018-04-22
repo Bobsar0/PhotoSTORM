@@ -13,11 +13,11 @@ import (
 type Users struct {
 	NewView   *views.View         //stores the new user view
 	LoginView *views.View         //stores the login view
-	us        *models.UserService //for easy access by handler methods
+	us        models.UserService //for easy access by handler methods
 }
 
 //NewUsers func sets up all the views our users controller will need.
-func NewUsers(us *models.UserService) *Users {
+func NewUsers(us models.UserService) *Users {
 	return &Users{
 		NewView:   views.NewView("bootstrap", "users/new"),
 		LoginView: views.NewView("bootstrap", "users/login"),
@@ -82,7 +82,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case models.ErrNotFound:
 			fmt.Fprintln(w, "Invalid email address!")
-		case models.ErrInvalidPassword:
+		case models.ErrPasswordIncorrect:
 			fmt.Fprintln(w, "Invalid password provided!")
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
