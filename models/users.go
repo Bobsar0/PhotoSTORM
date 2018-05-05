@@ -17,27 +17,27 @@ const hmacSecretKey = "secret-hmac-key"
 
 var userPwPepper = "secret-random-string"
 
-var (
+const (
 	// ErrNotFound is returned when a resource cannot be found in the database.
-	ErrNotFound = errors.New("models: resource not found")
+	ErrNotFound = "models: resource not found"
 	// ErrInvalidID is returned when an invalid ID is provided to a method like Delete.
-	ErrInvalidID = errors.New("models: ID provided was invalid")
+	ErrInvalidID = "models: ID provided was invalid"
 	// ErrPasswordIncorrect is returned when an invalid password is used when attempting to authenticate a user.
-	ErrPasswordIncorrect = errors.New("models: incorrect password provided")
+	ErrPasswordIncorrect = "models: incorrect password provided"
 	// ErrEmailRequired is returned when an email address is not provided when creating a user
-	ErrEmailRequired = errors.New("models: email address is required")
+	ErrEmailRequired = "models: email address is required"
 	// ErrEmailInvalid is returned when an email address provided does not match any of our requirements
-	ErrEmailInvalid = errors.New("models: email address is not valid")
+	ErrEmailInvalid = "models: email address is not valid"
 	// ErrEmailTaken is returned when an update or create is attempted with an email address that is already in use.
-	ErrEmailTaken = errors.New("models: email address is already taken")
+	ErrEmailTaken = "models: email address is already taken"
 	// ErrPasswordTooShort is returned when a user tries to set a password that is less than 8 characters long.
-	ErrPasswordTooShort = errors.New("models: password must be at least 8 characters long")
+	ErrPasswordTooShort = "models: password must be at least 8 characters long"
 	// ErrPasswordRequired is returned when a create is attempted without a user password provided.
-	ErrPasswordRequired = errors.New("models: password is required")
+	ErrPasswordRequired = "models: password is required"
 	// ErrRememberRequired is returned when a create or update is attempted without a user remember token hash
-	ErrRememberRequired = errors.New("models: remember token is required")
+	ErrRememberRequired = "models: remember token is required"
 	// ErrRememberTooShort is returned when a remember token is not at least 32 bytes
-	ErrRememberTooShort = errors.New("models: remember token must be at least 32 bytes")
+	ErrRememberTooShort = "models: remember token must be at least 32 bytes"
  )
 
 var _ UserDB = &userGorm{}         //shows that type userGorm implements the UserDB interface. Merely a validation test
@@ -458,4 +458,17 @@ func (uv *userValidator) rememberHashRequired(user *User) error {
 		return ErrRememberRequired
 	}
 	return nil
+}
+
+type modelError string
+func (e modelError) Error() string {
+	return string(e)
+}
+
+// Public errors requires us to define a new type that implements the PublicError interface.
+func (e modelError) Public() string {
+	s := strings.Replace(string(e), "models: ", "", 1)
+	split := strings.Split(s, " ")
+	split[0] = strings.Title(split[0])
+	return strings.Join(split, " ")
 }

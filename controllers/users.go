@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"log"
 
 	"github.com/bobsar0/PhotoSTORM/models"
 	"github.com/bobsar0/PhotoSTORM/rand"
@@ -27,9 +28,7 @@ func NewUsers(us models.UserService) *Users {
 
 // NewUserForm is used to render the form where a user can create a new user account. GET /signup
 func (u *Users) NewUserForm(w http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	u.NewView.Render(w, nil)
 }
 
 //SignupForm contains fields required to be filled by the user in the form
@@ -46,9 +45,12 @@ type LoginForm struct {
 
 //Create is used to process the signup form when a user tries to create a new user account. POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		u.NewView.Render(w, vd)
+		return
 	}
 	user := models.User{
 		Name:     form.Name,
@@ -56,13 +58,13 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		Password: form.Password,
 	}
 	if err := u.us.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.NewView.Render(w, vd)
 		return
 	}
 	err := u.signIn(w, &user)
 	if err != nil {
-		// Temporarily render the error message for debugging
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	// Redirect to the cookie test page to test the cookie
@@ -72,27 +74,31 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 // Login is used to process the login form when a user tries to log in as an existing user (via email & pw).
 // POST /login
 func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
+		return
 	}
 	// Implementing Authentication
 	user, err := u.us.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(w, "Invalid email address!")
-		case models.ErrPasswordIncorrect:
-			fmt.Fprintln(w, "Invalid password provided!")
-		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			vd.AlertError("No user exists with that email address")	
 		}
+		default:
+			vd.SetAlert(err)
+		}
+		u.LoginView.Render(w, vd)
 		return //return if there are any errors
 	}
 	err = u.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
+	return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }

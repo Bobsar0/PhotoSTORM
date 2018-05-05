@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"bytes"
+	"io"
 )
 
 //Adding glob helper variables
@@ -13,6 +15,7 @@ var (
 	TemplateDir = "views/"
 	TemplateExt = ".gohtml"        //tells us what extension we expect all our template files to match
 )
+
 
 func layoutFiles() []string {
 	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt) //returns a slice of filepaths as []string that includes all files ending with .gohtml
@@ -46,16 +49,32 @@ func NewView(layout string, files ...string) *View {
 }
 
 //Render contains logic for rendering the view. Offloads the responsibility from our handlers.
-func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+func (v *View) Render(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
-	return v.Template.ExecuteTemplate(w, v.Layout, data)
+	
+	switch data.(type) {
+	case Data:
+		// do nothing
+	default:
+		data = Data{
+			Yield: data,
+		}
+	}
+	var buf bytes.Buffer
+	err := v.Template.ExecuteTemplate(&buf, v.Layout, data)
+	if err != nil {
+		http.Error(w, "Something went wrong. If the problem persists, please email support@lenslocked.com",
+			http.StatusInternalServerError)
+		return
+	}
+	// If we get here that means our template executed correctly
+	// and we can copy the buffer to the ResponseWriter
+		io.Copy(w, &buf)
 }
 
 //ServeHTTP() method is written so our View type can implement http.Handler interface for use in the r.Handle() method
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := v.Render(w, nil); err != nil {
-		panic(err)
-	}
+	v.Render(w, nil)
 }
 
 // addTemplatePath takes in a slice of strings representing file paths for templates, 
