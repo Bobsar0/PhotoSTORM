@@ -1,9 +1,8 @@
 package models
 
 import (
-	"errors"
-	"strings"
 	"regexp"
+	"strings"
 
 	"github.com/bobsar0/PhotoSTORM/hash"
 	"github.com/bobsar0/PhotoSTORM/rand"
@@ -19,26 +18,26 @@ var userPwPepper = "secret-random-string"
 
 const (
 	// ErrNotFound is returned when a resource cannot be found in the database.
-	ErrNotFound = "models: resource not found"
+	ErrNotFound modelError = "models: resource not found"
 	// ErrInvalidID is returned when an invalid ID is provided to a method like Delete.
-	ErrInvalidID = "models: ID provided was invalid"
+	ErrInvalidID modelError = "models: ID provided was invalid"
 	// ErrPasswordIncorrect is returned when an invalid password is used when attempting to authenticate a user.
-	ErrPasswordIncorrect = "models: incorrect password provided"
+	ErrPasswordIncorrect modelError = "models: incorrect password provided"
 	// ErrEmailRequired is returned when an email address is not provided when creating a user
-	ErrEmailRequired = "models: email address is required"
+	ErrEmailRequired modelError = "models: email address is required"
 	// ErrEmailInvalid is returned when an email address provided does not match any of our requirements
-	ErrEmailInvalid = "models: email address is not valid"
+	ErrEmailInvalid modelError = "models: email address is not valid"
 	// ErrEmailTaken is returned when an update or create is attempted with an email address that is already in use.
-	ErrEmailTaken = "models: email address is already taken"
+	ErrEmailTaken modelError = "models: email address is already taken"
 	// ErrPasswordTooShort is returned when a user tries to set a password that is less than 8 characters long.
-	ErrPasswordTooShort = "models: password must be at least 8 characters long"
+	ErrPasswordTooShort modelError = "models: password must be at least 8 characters long"
 	// ErrPasswordRequired is returned when a create is attempted without a user password provided.
-	ErrPasswordRequired = "models: password is required"
+	ErrPasswordRequired modelError = "models: password is required"
 	// ErrRememberRequired is returned when a create or update is attempted without a user remember token hash
-	ErrRememberRequired = "models: remember token is required"
+	ErrRememberRequired modelError = "models: remember token is required"
 	// ErrRememberTooShort is returned when a remember token is not at least 32 bytes
-	ErrRememberTooShort = "models: remember token must be at least 32 bytes"
- )
+	ErrRememberTooShort modelError = "models: remember token must be at least 32 bytes"
+)
 
 var _ UserDB = &userGorm{}         //shows that type userGorm implements the UserDB interface. Merely a validation test
 var _ UserService = &userService{} //Also verifies that our userService type implements the UserService interface.
@@ -82,29 +81,11 @@ type UserDB interface {
 	Create(user *User) error
 	Update(user *User) error
 	Delete(id uint) error
-	// Used to close a DB connection
-	Close() error
-	// Migration helpers
-	AutoMigrate() error
-	DestructiveReset() error
 }
 
 // userGorm represents our database interaction layer and implements the UserDB interface fully.
 type userGorm struct {
-	db   *gorm.DB
-	//hmac hash.HMAC
-}
-
-//We don't export this function as we wouldn’t want any code outside of our models package instantiating userGorm instances with this function,
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-	db.LogMode(true)
-	return &userGorm{
-		db:   db,
-	}, nil
+	db *gorm.DB
 }
 
 //userService defines the abstraction layer for our users database - a way of hiding implementation details.
@@ -113,29 +94,27 @@ type userService struct {
 }
 
 //NewUserService instantiates our userService instances
-func NewUserService(connectionInfo string) (UserService, error) {
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) UserService {
+	ug := &userGorm{db}
 	hmac := hash.NewHMAC(hmacSecretKey)
 	uv := newUserValidator(ug, hmac)
 	return &userService{
 		UserDB: uv,
-	}, nil
+	}
 }
 
 // userValidator is our validation layer that validates and normalizes data
 // before passing it on to the next UserDB in our interface chain.
 type userValidator struct {
 	UserDB
-	hmac 		hash.HMAC
+	hmac       hash.HMAC
 	emailRegex *regexp.Regexp
 }
+
 func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 	return &userValidator{
 		UserDB: udb,
-		hmac: hmac,
+		hmac:   hmac,
 		emailRegex: regexp.MustCompile(
 			`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
 	}
@@ -205,7 +184,7 @@ func (uv *userValidator) ByRemember(token string) (*User, error) {
 	return uv.UserDB.ByRemember(user.RememberHash)
 }
 
-// ByRemember looks up a user with the given remember token and returns that user. 
+// ByRemember looks up a user with the given remember token and returns that user.
 // This method expects the remember token to already be hashed.
 func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	var user User
@@ -216,33 +195,30 @@ func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	return &user, nil
 }
 
-// DestructiveReset drops the user table and rebuilds it. Useful for quick reset of table during development.
-// Not to be used in production
-func (ug *userGorm) DestructiveReset() error {
-	err := ug.db.DropTableIfExists(&User{}).Error
+// DestructiveReset drops all tables and rebuilds them
+// // Not to be used in production!!!
+func (s *Services) DestructiveReset() error {
+	err := s.db.DropTableIfExists(&User{}, &Gallery{}).Error
 	if err != nil {
 		return err
 	}
-	return ug.AutoMigrate()
+	return s.AutoMigrate()
 }
 
-// AutoMigrate will attempt to automatically migrate the users table
-func (ug *userGorm) AutoMigrate() error {
-	if err := ug.db.AutoMigrate(&User{}).Error; err != nil {
-		return err
-	}
-	return nil
+// AutoMigrate will attempt to automatically migrate all tables
+func (s *Services) AutoMigrate() error {
+	return s.db.AutoMigrate(&User{}, &Gallery{}).Error
 }
 
 // Create will create the provided user and backfill data
 // like the ID, CreatedAt, and UpdatedAt fields.
 func (uv *userValidator) Create(user *User) error {
-	if err := runUserValFns(user, 
+	if err := runUserValFns(user,
 		uv.passwordRequired,
 		uv.passwordMinLength,
-		uv.bcryptPassword, 
+		uv.bcryptPassword,
 		uv.passwordHashRequired,
-		uv.setRememberIfUnset, 
+		uv.setRememberIfUnset,
 		uv.rememberMinBytes,
 		uv.hmacRemember,
 		uv.normalizeEmail,
@@ -253,6 +229,7 @@ func (uv *userValidator) Create(user *User) error {
 	}
 	return uv.UserDB.Create(user)
 }
+
 // Create will create the provided user and backfill data like the ID, CreatedAt, and UpdatedAt fields.
 func (ug *userGorm) Create(user *User) error {
 	return ug.db.Create(user).Error
@@ -260,10 +237,10 @@ func (ug *userGorm) Create(user *User) error {
 
 // Update will hash a remember token if it is provided.
 func (uv *userValidator) Update(user *User) error {
-	if err := runUserValFns(user, 
+	if err := runUserValFns(user,
 		uv.passwordMinLength,
-		uv.bcryptPassword, 
-		uv.passwordHashRequired,		
+		uv.bcryptPassword,
+		uv.passwordHashRequired,
 		uv.rememberMinBytes,
 		uv.hmacRemember,
 		uv.normalizeEmail,
@@ -274,6 +251,7 @@ func (uv *userValidator) Update(user *User) error {
 	}
 	return uv.UserDB.Update(user)
 }
+
 // Update will update the provided user with all of the data in the provided user object.
 func (ug *userGorm) Update(user *User) error {
 	return ug.db.Save(user).Error
@@ -318,10 +296,10 @@ func (us *userService) Authenticate(email, password string) (*User, error) {
 	//return nil, nil
 }
 
-// Close closes the UserService database connection
+// Closes the database connection
 // if we were to defer closing the DB inside of our NewUserService function, it would end up closing the database connection right before returning the new user service.
-func (ug *userGorm) Close() error {
-	return ug.db.Close()
+func (s *Services) Close() error {
+	return s.db.Close()
 }
 
 // bcryptPassword will hash a user's password with an app-wide pepper and bcrypt, which salts for us.
@@ -338,7 +316,7 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	user.Password = ""
 	return nil
 }
-	
+
 type userValFn func(*User) error // declares any function that accepts *User and returns an error to be of type userValFn
 
 func runUserValFns(user *User, fns ...userValFn) error {
@@ -349,6 +327,7 @@ func runUserValFns(user *User, fns ...userValFn) error {
 	}
 	return nil
 }
+
 //Sets remember token if unset
 func (uv *userValidator) setRememberIfUnset(user *User) error {
 	if user.Remember != "" {
@@ -361,13 +340,14 @@ func (uv *userValidator) setRememberIfUnset(user *User) error {
 	user.Remember = token
 	return nil
 }
+
 //Sets the RememberHash
 func (uv *userValidator) hmacRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
 	}
 	user.RememberHash = uv.hmac.Hash(user.Remember)
-		return nil
+	return nil
 }
 
 func (uv *userValidator) idGreaterThan(n uint) userValFn {
@@ -430,7 +410,7 @@ func (uv *userValidator) passwordMinLength(user *User) error {
 }
 func (uv *userValidator) passwordRequired(user *User) error {
 	if user.Password == "" {
-	return ErrPasswordRequired
+		return ErrPasswordRequired
 	}
 	return nil
 }
@@ -461,6 +441,7 @@ func (uv *userValidator) rememberHashRequired(user *User) error {
 }
 
 type modelError string
+
 func (e modelError) Error() string {
 	return string(e)
 }

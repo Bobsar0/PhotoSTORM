@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"log"
 
 	"github.com/bobsar0/PhotoSTORM/models"
 	"github.com/bobsar0/PhotoSTORM/rand"
@@ -12,8 +11,8 @@ import (
 
 //Users controller
 type Users struct {
-	NewView   *views.View         //stores the new user view
-	LoginView *views.View         //stores the login view
+	NewView   *views.View        //stores the new user view
+	LoginView *views.View        //stores the login view
 	us        models.UserService //for easy access by handler methods
 }
 
@@ -86,8 +85,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			vd.AlertError("No user exists with that email address")	
-		}
+			vd.AlertError("No user exists with that email address")
 		default:
 			vd.SetAlert(err)
 		}
@@ -98,7 +96,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		vd.SetAlert(err)
 		u.LoginView.Render(w, vd)
-	return
+		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
@@ -132,8 +130,8 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 		}
 	}
 	cookie := http.Cookie{
-		Name:  "remember_token",
-		Value: user.Remember,
+		Name:     "remember_token",
+		Value:    user.Remember,
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
