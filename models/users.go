@@ -37,11 +37,7 @@ const (
 	ErrRememberRequired modelError = "models: remember token is required"
 	// ErrRememberTooShort is returned when a remember token is not at least 32 bytes
 	ErrRememberTooShort modelError = "models: remember token must be at least 32 bytes"
-<<<<<<< HEAD
 )
-=======
- )
->>>>>>> ac1095758c9794cf9ad5cbc8c118f7e787faae5f
 
 var _ UserDB = &userGorm{}         //shows that type userGorm implements the UserDB interface. Merely a validation test
 var _ UserService = &userService{} //Also verifies that our userService type implements the UserService interface.

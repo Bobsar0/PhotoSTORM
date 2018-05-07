@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/bobsar0/photostorm/models"
+	"github.com/bobsar0/photoSTORM/models"
 )
 
 const (

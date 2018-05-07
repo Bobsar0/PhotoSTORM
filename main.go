@@ -6,6 +6,7 @@ import (
 
 	"github.com/bobsar0/PhotoSTORM/controllers"
 	"github.com/bobsar0/PhotoSTORM/models"
+	"github.com/bobsar0/PhotoSTORM/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -34,7 +35,15 @@ func main() {
 	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
 	galleriesC := controllers.NewGalleries(services.Gallery)
+	
+	requireUserMw := middleware.RequireUser{
+		UserService: services.User,
+	}
 
+	// galleriesC.New is an http.Handler, so we use Apply
+	newGallery := requireUserMw.Apply(galleriesC.New)
+	// galleriecsC.Create is an http.HandlerFunc, so we use ApplyFn
+createGallery := requireUserMw.ApplyFn(galleriesC.Create)
 	r := mux.NewRouter() //New gorilla/mux router
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
@@ -47,8 +56,8 @@ func main() {
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 
-	r.Handle("/galleries/new", galleriesC.New).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	r.Handle("/galleries/new", newGallery).Methods("GET")
+	r.HandleFunc("/galleries", createGallery).Methods("POST")
 
 	fmt.Println("Starting the server on :8000...")
 	http.ListenAndServe(":8080", r) // starts up a web server listening on port 8080 using our gorilla/mux router as the default handler for web requests.
