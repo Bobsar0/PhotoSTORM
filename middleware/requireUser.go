@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bobsar0/PhotoSTORM/context"
 	"github.com/bobsar0/PhotoSTORM/models"
 )
 
@@ -36,10 +37,19 @@ func (ru *RequireUser) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		fmt.Println("User found: ", user)
+		// Get the context from our request
+		ctx := r.Context()
+		// Create a new context from the existing one that has
+		// our user stored in it with the private user key
+		ctx = context.WithUser(ctx, user)
+		// Create a new request from the existing one with our
+		// context attached to it and assign it back to `r`.
+		r = r.WithContext(ctx)
+		// Call next(w, r) with our updated context.
 		next(w, r)
 	})
 }
 
 func (mw *RequireUser) Apply(next http.Handler) http.HandlerFunc {
 	return mw.ApplyFn(next.ServeHTTP)
-	}
+}
